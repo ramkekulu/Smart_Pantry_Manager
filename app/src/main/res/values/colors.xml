@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Main application colours -->
+    <color name="cream_background">#F8F1E1</color>
+    <color name="butter_cream">#FFF8E7</color>
+
+    <!-- Khaki toolbar/navigation -->
+    <color name="khaki">#B5A47A</color>
+    <color name="dark_khaki">#8F815D</color>
+
+    <!-- Text -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- UI -->
+    <color name="light_border">#D8CCB5</color>
+    <color name="button_text">#000000</color>
+    <color name="success_green">#657A55</color>
+    <color name="error_red">#A94442</color>
+
+</resources>
