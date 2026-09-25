@@ -1,6 +1,8 @@
 package com.kekulu.smart_pantry_manager;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -40,10 +42,18 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(view -> {
 
             String email =
-                    editEmail.getText().toString().trim();
+                    editEmail.getText()
+                            .toString()
+                            .trim()
+                            .toLowerCase();
 
             String password =
-                    editPassword.getText().toString();
+                    editPassword.getText()
+                            .toString();
+
+            // ----------------------------------------------------
+            // EMAIL VALIDATION
+            // ----------------------------------------------------
 
             if (email.isEmpty()) {
 
@@ -52,12 +62,20 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
+            // ----------------------------------------------------
+            // PASSWORD VALIDATION
+            // ----------------------------------------------------
+
             if (password.isEmpty()) {
 
                 editPassword.setError("Enter your password");
                 editPassword.requestFocus();
                 return;
             }
+
+            // ----------------------------------------------------
+            // CHECK LOGIN
+            // ----------------------------------------------------
 
             boolean loginSuccessful =
                     databaseHelper.checkUserLogin(
@@ -67,16 +85,76 @@ public class LoginActivity extends AppCompatActivity {
 
             if (loginSuccessful) {
 
+                // =================================================
+                // GET THE ACTUAL USER DETAILS FROM DATABASE
+                // =================================================
+
+                Cursor cursor =
+                        databaseHelper.getUserByEmail(email);
+
+                if (cursor != null) {
+
+                    try {
+
+                        if (cursor.moveToFirst()) {
+
+                            String userName =
+                                    cursor.getString(
+                                            cursor.getColumnIndexOrThrow(
+                                                    DatabaseHelper.USER_NAME
+                                            )
+                                    );
+
+                            String userEmail =
+                                    cursor.getString(
+                                            cursor.getColumnIndexOrThrow(
+                                                    DatabaseHelper.USER_EMAIL
+                                            )
+                                    );
+
+                            // =====================================
+                            // SAVE CURRENT USER SESSION
+                            // =====================================
+
+                            SharedPreferences userPrefs =
+                                    getSharedPreferences(
+                                            "UserSession",
+                                            MODE_PRIVATE
+                                    );
+
+                            userPrefs.edit()
+                                    .putString(
+                                            "user_name",
+                                            userName
+                                    )
+                                    .putString(
+                                            "user_email",
+                                            userEmail
+                                    )
+                                    .apply();
+                        }
+
+                    } finally {
+
+                        cursor.close();
+                    }
+                }
+
+                // =================================================
+                // LOGIN SUCCESSFUL
+                // =================================================
+
                 Toast.makeText(
                         LoginActivity.this,
                         "Login successful",
                         Toast.LENGTH_SHORT
                 ).show();
 
-                Intent intent = new Intent(
-                        LoginActivity.this,
-                        MainActivity.class
-                );
+                Intent intent =
+                        new Intent(
+                                LoginActivity.this,
+                                MainActivity.class
+                        );
 
                 startActivity(intent);
 
@@ -93,15 +171,16 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // ========================================================
-        // REGISTER LINK
+        // REGISTER
         // ========================================================
 
         txtRegister.setOnClickListener(view -> {
 
-            Intent intent = new Intent(
-                    LoginActivity.this,
-                    RegisterActivity.class
-            );
+            Intent intent =
+                    new Intent(
+                            LoginActivity.this,
+                            RegisterActivity.class
+                    );
 
             startActivity(intent);
         });

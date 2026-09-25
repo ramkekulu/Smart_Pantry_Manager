@@ -17,7 +17,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============================================================
 
     private static final String DATABASE_NAME = "smart_pantry.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     // ============================================================
     // PANTRY TABLE
@@ -101,13 +101,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     ) {
 
         /*
-         * We recreate the database when the structure changes.
+         * During development the database is recreated when
+         * the database structure changes.
          *
-         * This is convenient during development.
-         *
-         * IMPORTANT:
-         * If you already have pantry data you want to keep,
-         * export/backup it before changing the database version.
+         * This keeps the application database consistent.
          */
 
         db.execSQL(
@@ -428,6 +425,111 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // ============================================================
+    // USER - GET USER BY EMAIL
+    // ============================================================
+
+    public Cursor getUserByEmail(String email) {
+
+        SQLiteDatabase db =
+                getReadableDatabase();
+
+        return db.query(
+                TABLE_USERS,
+
+                new String[]{
+                        USER_ID,
+                        USER_NAME,
+                        USER_EMAIL,
+                        USER_PASSWORD
+                },
+
+                USER_EMAIL + "=?",
+
+                new String[]{
+                        email.trim()
+                                .toLowerCase(Locale.ROOT)
+                },
+
+                null,
+                null,
+                null
+        );
+    }
+
+    // ============================================================
+    // USER - UPDATE PASSWORD
+    // ============================================================
+
+    public boolean updateUserPassword(
+            String email,
+            String newPassword
+    ) {
+
+        if (email == null ||
+                newPassword == null) {
+
+            return false;
+        }
+
+        email =
+                email.trim()
+                        .toLowerCase(Locale.ROOT);
+
+        if (email.isEmpty() ||
+                newPassword.isEmpty()) {
+
+            return false;
+        }
+
+        SQLiteDatabase db =
+                getWritableDatabase();
+
+        ContentValues values =
+                new ContentValues();
+
+        values.put(
+                USER_PASSWORD,
+                newPassword
+        );
+
+        int result;
+
+        try {
+
+            result =
+                    db.update(
+                            TABLE_USERS,
+                            values,
+                            USER_EMAIL + "=?",
+                            new String[]{
+                                    email
+                            }
+                    );
+
+        } finally {
+
+            db.close();
+        }
+
+        return result > 0;
+    }
+
+    // ============================================================
+    // USER - CHECK CURRENT PASSWORD
+    // ============================================================
+
+    public boolean checkCurrentPassword(
+            String email,
+            String currentPassword
+    ) {
+
+        return checkUserLogin(
+                email,
+                currentPassword
+        );
+    }
+
+    // ============================================================
     // PANTRY - ADD
     // ============================================================
 
@@ -596,7 +698,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // ============================================================
-    // PANTRY - DELETE
+    // PANTRY - DELETE ONE
     // ============================================================
 
     public int deletePantryItem(int id) {
@@ -615,6 +717,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             new String[]{
                                     String.valueOf(id)
                             }
+                    );
+
+        } finally {
+
+            db.close();
+        }
+
+        return result;
+    }
+
+    // ============================================================
+    // PANTRY - CLEAR ALL
+    // ============================================================
+
+    public int clearPantry() {
+
+        SQLiteDatabase db =
+                getWritableDatabase();
+
+        int result;
+
+        try {
+
+            result =
+                    db.delete(
+                            TABLE_PANTRY,
+                            null,
+                            null
                     );
 
         } finally {
@@ -747,10 +877,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                                 RECIPE_INGREDIENT_UNIT
                                         )
                         );
-
-                // ------------------------------------------------
-                // Find enough quantity in pantry
-                // ------------------------------------------------
 
                 if (!hasEnoughIngredient(
                         db,
@@ -915,10 +1041,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         " "
                 );
 
-        // --------------------------------------------------------
-        // Common plural forms
-        // --------------------------------------------------------
-
         if (value.endsWith("ies")) {
 
             value =
@@ -946,10 +1068,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             value.length() - 1
                     );
         }
-
-        // --------------------------------------------------------
-        // Common aliases
-        // --------------------------------------------------------
 
         switch (value) {
 
@@ -1309,7 +1427,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 );
 
             } catch (NumberFormatException e) {
-
                 // Ignore invalid quantity.
             }
         }
@@ -1322,10 +1439,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============================================================
 
     private void seedRecipes(SQLiteDatabase db) {
-
-        // ========================================================
-        // 1. FRENCH TOAST
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1343,10 +1456,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 2. PANCAKES
-        // ========================================================
-
         addRecipe(
                 db,
                 "Pancakes",
@@ -1362,10 +1471,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"butter", "20", "g"}
                 }
         );
-
-        // ========================================================
-        // 3. OMELETTE
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1384,10 +1489,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 4. GRILLED CHEESE SANDWICH
-        // ========================================================
-
         addRecipe(
                 db,
                 "Grilled Cheese Sandwich",
@@ -1399,10 +1500,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"butter", "10", "g"}
                 }
         );
-
-        // ========================================================
-        // 5. CHICKEN SANDWICH
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1417,10 +1514,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"mayonnaise", "20", "g"}
                 }
         );
-
-        // ========================================================
-        // 6. CHICKEN WRAP
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1437,10 +1530,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 7. CHICKEN CURRY
-        // ========================================================
-
         addRecipe(
                 db,
                 "Chicken Curry",
@@ -1455,10 +1544,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"salt", "3", "g"}
                 }
         );
-
-        // ========================================================
-        // 8. CHICKEN STIR-FRY
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1476,10 +1561,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 9. FRIED RICE
-        // ========================================================
-
         addRecipe(
                 db,
                 "Fried Rice",
@@ -1496,10 +1577,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 10. TOMATO PASTA
-        // ========================================================
-
         addRecipe(
                 db,
                 "Tomato Pasta",
@@ -1514,10 +1591,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"salt", "2", "g"}
                 }
         );
-
-        // ========================================================
-        // 11. MACARONI AND CHEESE
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1534,10 +1607,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 12. SPAGHETTI BOLOGNESE
-        // ========================================================
-
         addRecipe(
                 db,
                 "Spaghetti Bolognese",
@@ -1552,10 +1621,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"salt", "2", "g"}
                 }
         );
-
-        // ========================================================
-        // 13. CHICKEN SALAD
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1572,10 +1637,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 14. VEGETABLE SOUP
-        // ========================================================
-
         addRecipe(
                 db,
                 "Vegetable Soup",
@@ -1591,10 +1652,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 15. MASHED POTATOES
-        // ========================================================
-
         addRecipe(
                 db,
                 "Mashed Potatoes",
@@ -1609,10 +1666,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 16. GARLIC BREAD
-        // ========================================================
-
         addRecipe(
                 db,
                 "Garlic Bread",
@@ -1626,10 +1679,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"salt", "1", "g"}
                 }
         );
-
-        // ========================================================
-        // 17. BEEF BURGER
-        // ========================================================
 
         addRecipe(
                 db,
@@ -1646,10 +1695,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 18. FRUIT SALAD
-        // ========================================================
-
         addRecipe(
                 db,
                 "Fruit Salad",
@@ -1665,10 +1710,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
         );
 
-        // ========================================================
-        // 19. PIZZA MARGHERITA
-        // ========================================================
-
         addRecipe(
                 db,
                 "Pizza Margherita",
@@ -1682,10 +1723,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"olive oil", "10", "ml"}
                 }
         );
-
-        // ========================================================
-        // 20. BEEF TACOS
-        // ========================================================
 
         addRecipe(
                 db,

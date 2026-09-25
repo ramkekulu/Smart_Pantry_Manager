@@ -1,6 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F1E3">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="#1F1F1F"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- PROFILE -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profile"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#665B3F" />
+
+        <TextView
+            android:id="@+id/txtProfileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="User"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#1F1F1F"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/txtProfileEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#4F4F4F"
+            android:layout_marginBottom="24dp" />
+
+        <!-- NOTIFICATIONS -->
+
+        <Switch
+            android:id="@+id/switchNotifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Expiry reminders"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#2B2B2B"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp" />
+
+        <!-- DARK MODE -->
+
+        <Switch
+            android:id="@+id/switchDarkMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dark mode"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#2B2B2B"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp" />
+
+        <!-- CHANGE PASSWORD -->
+
+        <Button
+            android:id="@+id/btnChangePassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Change Password"
+            android:textColor="#1F1F1F"
+            android:textStyle="bold"
+            android:backgroundTint="#B8AA86"
+            android:layout_marginTop="16dp" />
+
+        <!-- CLEAR PANTRY -->
+
+        <Button
+            android:id="@+id/btnClearPantry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear Pantry"
+            android:textColor="#1F1F1F"
+            android:textStyle="bold"
+            android:backgroundTint="#B8AA86"
+            android:layout_marginTop="12dp" />
+
+        <!-- ABOUT -->
+
+        <Button
+            android:id="@+id/btnAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="About"
+            android:textColor="#1F1F1F"
+            android:textStyle="bold"
+            android:backgroundTint="#B8AA86"
+            android:layout_marginTop="12dp" />
+
+        <!-- LOGOUT -->
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:layout_marginTop="24dp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:backgroundTint="#665B3F" />
+
+    </LinearLayout>
+
+</ScrollView>
+
