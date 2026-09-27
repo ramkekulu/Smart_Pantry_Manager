@@ -136,7 +136,7 @@ To test database persistence:
 ---
 
 ## GitHub Repository
-* **Repository:** [https://github.com/ramkekulu/Smart_Pantry_Manager.git](https://github.com/ramkekulu/Smart_Pantry_Manager.git)
+* **Repository:** []
 
 ---
 
