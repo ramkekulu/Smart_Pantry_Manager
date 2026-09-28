@@ -66,6 +66,8 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                     );
 
                     intent.putExtra("recipe_id", recipe.getId());
+                    intent.putExtra("RECIPE_TITLE", recipe.getName());
+                    intent.putExtra("RECIPE_INSTRUCTIONS", recipe.getMethod());
 
                     startActivity(intent);
                 }
@@ -79,8 +81,9 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                     SuggestedRecipesActivity.this,
                     PantryActivity.class
             );
-
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+            finish();
         });
 
         navRecipes.setOnClickListener(view -> {
@@ -93,8 +96,9 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                     SuggestedRecipesActivity.this,
                     SettingsActivity.class
             );
-
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+            finish();
         });
 
         loadSuggestedRecipes();

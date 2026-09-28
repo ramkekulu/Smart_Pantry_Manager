@@ -47,11 +47,11 @@
             android:exported="false" />
 
         <activity
-            android:name=".AddEditIngredientActivity"
+            android:name=".RecipeDetailActivity"
             android:exported="false" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".AddEditIngredientActivity"
             android:exported="false" />
 
         <activity

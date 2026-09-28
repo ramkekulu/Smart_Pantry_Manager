@@ -143,8 +143,9 @@ public class PantryActivity extends AppCompatActivity {
                         PantryActivity.this,
                         SuggestedRecipesActivity.class
                 );
-
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
+                finish();
             });
         }
 
@@ -154,8 +155,9 @@ public class PantryActivity extends AppCompatActivity {
                         PantryActivity.this,
                         SettingsActivity.class
                 );
-
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
+                finish();
             });
         }
 

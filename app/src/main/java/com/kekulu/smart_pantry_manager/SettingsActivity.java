@@ -127,8 +127,8 @@ public class SettingsActivity extends AppCompatActivity {
                     )
                     .setPositiveButton("Clear All", (dialog, which) -> {
 
-                        // TODO: Add database clear function here
-                        // e.g. dbHelper.clearPantry();
+                        DatabaseHelper dbHelper = new DatabaseHelper(SettingsActivity.this);
+                        dbHelper.clearPantry();
 
                         Toast.makeText(
                                 SettingsActivity.this,

@@ -897,8 +897,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             if (recipeCursor != null) {
                 recipeCursor.close();
             }
-
-            db.close();
         }
     }
 
@@ -1458,6 +1456,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         addRecipe(
                 db,
+                "French Toast",
+                "Beat the eggs with milk, sugar and cinnamon. " +
+                        "Dip the bread into the mixture. " +
+                        "Fry in butter until golden on both sides.",
+                new String[][]{
+                        {"bread", "2", "piece"},
+                        {"egg", "2", "piece"},
+                        {"milk", "100", "ml"},
+                        {"sugar", "10", "g"},
+                        {"cinnamon", "2", "g"},
+                        {"butter", "10", "g"}
+                }
+        );
+
+        addRecipe(
+                db,
                 "Pancakes",
                 "Mix flour, sugar and baking powder. " +
                         "Add milk and eggs. " +
@@ -1738,5 +1752,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"cheese", "40", "g"}
                 }
         );
+
+        addRecipe(
+                db,
+                "Egg Mayo Sandwich",
+                "1. Peel the hard-boiled eggs and place them in a bowl. " +
+                        "2. Mash the eggs thoroughly using a fork. " +
+                        "3. Add 2 tbsp mayonnaise, 1/4 tsp salt, and 1/4 tsp black pepper, then mix until smooth. " +
+                        "4. Spread 1 tbsp softened butter evenly over one side of each bread slice. " +
+                        "5. Divide the egg mayo mixture between two bread slices, top with the remaining slices, cut diagonally, and serve.",
+                new String[][]{
+                        {"egg", "2", "piece"},
+                        {"bread", "4", "piece"},
+                        {"mayonnaise", "20", "g"},
+                        {"butter", "15", "g"},
+                        {"salt", "1", "g"},
+                        {"black pepper", "1", "g"}
+                }
+        );
+
+
     }
+
 }
