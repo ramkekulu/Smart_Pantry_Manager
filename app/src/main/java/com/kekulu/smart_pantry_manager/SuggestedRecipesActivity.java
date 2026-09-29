@@ -3,10 +3,15 @@ package com.kekulu.smart_pantry_manager;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,6 +22,9 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
     private RecyclerView recipesRecyclerView;
     private TextView noRecipesText;
+    private View noRecipesContainer;
+    private Button btnAddMoreIngredients;
+
     private DatabaseHelper databaseHelper;
 
     private RecipeAdapter recipeAdapter;
@@ -32,6 +40,12 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_suggested_recipes);
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, 0, 0, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+
         Toolbar toolbar = findViewById(R.id.recipesToolbar);
 
         setSupportActionBar(toolbar);
@@ -44,6 +58,20 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
         recipesRecyclerView = findViewById(R.id.recipesRecyclerView);
         noRecipesText = findViewById(R.id.noRecipesText);
+        noRecipesContainer = findViewById(R.id.noRecipesContainer);
+        btnAddMoreIngredients = findViewById(R.id.btnAddMoreIngredients);
+
+        if (btnAddMoreIngredients != null) {
+            btnAddMoreIngredients.setOnClickListener(v -> {
+                Intent intent = new Intent(
+                        SuggestedRecipesActivity.this,
+                        PantryActivity.class
+                );
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            });
+        }
 
         navPantry = findViewById(R.id.recipesNavPantry);
         navRecipes = findViewById(R.id.recipesNavRecipes);
@@ -108,16 +136,6 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
         recipeItems.clear();
 
-        /*
-         * This method returns ONLY recipes that can be
-         * completely prepared using the current pantry.
-         *
-         * It checks:
-         * 1. Every required ingredient exists.
-         * 2. Pantry quantity is sufficient.
-         * 3. Units match.
-         * 4. Ingredient names are normalized.
-         */
         List<Integer> suggestedRecipeIds =
                 databaseHelper.getSuggestedRecipeIds();
 
@@ -147,8 +165,10 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                             )
                     );
 
+                    List<String> missing = databaseHelper.getMissingIngredients(id);
+
                     RecipeItem recipe =
-                            new RecipeItem(id, name, method);
+                            new RecipeItem(id, name, method, missing);
 
                     recipeItems.add(recipe);
                 }
@@ -166,9 +186,12 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                     RecyclerView.GONE
             );
 
-            noRecipesText.setVisibility(
-                    TextView.VISIBLE
-            );
+            if (noRecipesContainer != null) {
+                noRecipesContainer.setVisibility(View.VISIBLE);
+            } else if (noRecipesText != null) {
+                noRecipesText.setText("No recipes match your pantry yet - add more ingredients");
+                noRecipesText.setVisibility(View.VISIBLE);
+            }
 
         } else {
 
@@ -176,9 +199,12 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                     RecyclerView.VISIBLE
             );
 
-            noRecipesText.setVisibility(
-                    TextView.GONE
-            );
+            if (noRecipesContainer != null) {
+                noRecipesContainer.setVisibility(View.GONE);
+            }
+            if (noRecipesText != null) {
+                noRecipesText.setVisibility(View.GONE);
+            }
         }
     }
 

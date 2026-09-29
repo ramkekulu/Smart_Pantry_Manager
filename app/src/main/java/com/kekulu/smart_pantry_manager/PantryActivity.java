@@ -1,8 +1,13 @@
 package com.kekulu.smart_pantry_manager;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,6 +19,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class PantryActivity extends AppCompatActivity {
 
@@ -23,8 +29,13 @@ public class PantryActivity extends AppCompatActivity {
 
     private TextView emptyPantryText;
     private FloatingActionButton addPantryButton;
+    private EditText pantrySearchInput;
+
+    private View pantryExpiryAlertBanner;
+    private TextView pantryExpiryAlertText;
 
     private List<PantryItem> pantryItems;
+    private List<PantryItem> allPantryItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +68,29 @@ public class PantryActivity extends AppCompatActivity {
         pantryRecyclerView = findViewById(R.id.pantryRecyclerView);
         emptyPantryText = findViewById(R.id.emptyPantryText);
         addPantryButton = findViewById(R.id.addPantryButton);
+        pantrySearchInput = findViewById(R.id.pantrySearchInput);
+
+        pantryExpiryAlertBanner = findViewById(R.id.pantryExpiryAlertBanner);
+        pantryExpiryAlertText = findViewById(R.id.pantryExpiryAlertText);
+
+        // ---------------------------------------------------------
+        // SEARCH LISTENER
+        // ---------------------------------------------------------
+
+        if (pantrySearchInput != null) {
+            pantrySearchInput.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    filterPantry(s.toString());
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
 
         // ---------------------------------------------------------
         // RECYCLER VIEW
@@ -67,6 +101,7 @@ public class PantryActivity extends AppCompatActivity {
         );
 
         pantryItems = new ArrayList<>();
+        allPantryItems = new ArrayList<>();
 
         pantryAdapter = new PantryAdapter(
                 this,
@@ -133,6 +168,9 @@ public class PantryActivity extends AppCompatActivity {
 
         if (pantryNavPantry != null) {
             pantryNavPantry.setOnClickListener(view -> {
+                if (pantrySearchInput != null) {
+                    pantrySearchInput.setText("");
+                }
                 loadPantryItems();
             });
         }
@@ -174,7 +212,7 @@ public class PantryActivity extends AppCompatActivity {
 
     private void loadPantryItems() {
 
-        pantryItems.clear();
+        allPantryItems.clear();
 
         Cursor cursor =
                 databaseHelper.getAllPantryItems();
@@ -196,6 +234,10 @@ public class PantryActivity extends AppCompatActivity {
                                         DatabaseHelper.PANTRY_NAME
                                 )
                         );
+
+                if (name == null || name.trim().isEmpty()) {
+                    name = "Pantry Item";
+                }
 
                 double quantity =
                         cursor.getDouble(
@@ -226,7 +268,7 @@ public class PantryActivity extends AppCompatActivity {
                         expiryDate
                 );
 
-                pantryItems.add(item);
+                allPantryItems.add(item);
             }
 
         } finally {
@@ -234,7 +276,55 @@ public class PantryActivity extends AppCompatActivity {
             cursor.close();
         }
 
-        pantryAdapter.notifyDataSetChanged();
+        String currentQuery = pantrySearchInput != null ? pantrySearchInput.getText().toString() : "";
+        filterPantry(currentQuery);
+
+        // ---------------------------------------------------------
+        // EXPIRING SOON ALERT CHECK
+        // ---------------------------------------------------------
+
+        SharedPreferences prefs = getSharedPreferences("AppSettings", MODE_PRIVATE);
+        boolean notificationsEnabled = prefs.getBoolean("notifications_enabled", true);
+
+        int expiringCount = 0;
+        if (notificationsEnabled) {
+            for (PantryItem item : allPantryItems) {
+                long days = DateUtils.getDaysUntilExpiry(item.getExpiryDate());
+                if (days <= 3) {
+                    expiringCount++;
+                }
+            }
+        }
+
+        if (notificationsEnabled && expiringCount > 0 && pantryExpiryAlertBanner != null) {
+            pantryExpiryAlertBanner.setVisibility(View.VISIBLE);
+            if (pantryExpiryAlertText != null) {
+                pantryExpiryAlertText.setText("⚠️ Alert: " + expiringCount + " ingredient(s) in your pantry are expiring soon or expired!");
+            }
+        } else if (pantryExpiryAlertBanner != null) {
+            pantryExpiryAlertBanner.setVisibility(View.GONE);
+        }
+    }
+
+    // =============================================================
+    // FILTER PANTRY (SEARCH)
+    // =============================================================
+
+    private void filterPantry(String query) {
+        pantryItems.clear();
+        String lowerQuery = query.toLowerCase(Locale.ROOT).trim();
+        if (lowerQuery.isEmpty()) {
+            pantryItems.addAll(allPantryItems);
+        } else {
+            for (PantryItem item : allPantryItems) {
+                if (item.getName().toLowerCase(Locale.ROOT).contains(lowerQuery)) {
+                    pantryItems.add(item);
+                }
+            }
+        }
+        if (pantryAdapter != null) {
+            pantryAdapter.notifyDataSetChanged();
+        }
 
         // ---------------------------------------------------------
         // EMPTY STATE
@@ -245,6 +335,7 @@ public class PantryActivity extends AppCompatActivity {
             emptyPantryText.setVisibility(
                     TextView.VISIBLE
             );
+            emptyPantryText.setText(allPantryItems.isEmpty() ? "Your pantry is empty.\nAdd ingredients to get started." : "No matching ingredients found.");
 
             pantryRecyclerView.setVisibility(
                     RecyclerView.GONE
@@ -307,4 +398,3 @@ public class PantryActivity extends AppCompatActivity {
         }
     }
 }
-

@@ -7,6 +7,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import java.util.List;
+
 public class RecipeDetailActivity extends AppCompatActivity {
 
     private TextView recipeNameText;
@@ -76,6 +78,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     Cursor ingCursor = databaseHelper.getRecipeIngredients(recipeId);
                     if (ingCursor != null) {
                         try {
+                            List<String> missingList = databaseHelper.getMissingIngredients(recipeId);
                             StringBuilder ingBuilder = new StringBuilder();
                             while (ingCursor.moveToNext()) {
                                 String ingName = ingCursor.getString(
@@ -89,7 +92,12 @@ public class RecipeDetailActivity extends AppCompatActivity {
                                 );
 
                                 String qtyStr = (qty == (long) qty) ? String.format("%d", (long) qty) : String.valueOf(qty);
-                                ingBuilder.append("• ").append(qtyStr).append(" ").append(unit).append(" ").append(ingName).append("\n");
+                                boolean isMissing = missingList.contains(ingName);
+                                if (isMissing) {
+                                    ingBuilder.append("❌ ").append(qtyStr).append(" ").append(unit).append(" ").append(ingName).append(" (Missing)\n");
+                                } else {
+                                    ingBuilder.append("✓ ").append(qtyStr).append(" ").append(unit).append(" ").append(ingName).append(" (In Pantry)\n");
+                                }
                             }
                             if (ingBuilder.length() > 0) {
                                 ingredients = ingBuilder.toString().trim();
@@ -106,7 +114,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 recipeNameText.setText(title != null && !title.isEmpty() ? title : "Suggested Recipe");
             }
 
-            // Populate Ingredients with bullet formatting fallback
+            // Populate Ingredients with tick/cross formatting
             if (ingredientsText != null) {
                 if (ingredients != null && !ingredients.isEmpty()) {
                     ingredientsText.setText(formatIngredients(ingredients));
@@ -115,10 +123,10 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 }
             }
 
-            // Populate Cooking Instructions
+            // Populate Cooking Instructions with step-by-step formatting
             if (cookingInstructionsText != null) {
                 if (instructions != null && !instructions.isEmpty()) {
-                    cookingInstructionsText.setText(instructions);
+                    cookingInstructionsText.setText(formatInstructions(instructions));
                 } else {
                     cookingInstructionsText.setText("No cooking instructions available.");
                 }
@@ -145,17 +153,42 @@ public class RecipeDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Formats raw ingredient strings or comma-separated lists into bullet points.
+     * Formats raw ingredient strings or comma-separated lists into bullet points with checkmarks/crosses.
      */
     private String formatIngredients(String rawIngredients) {
-        if (rawIngredients.contains("•")) {
-            return rawIngredients.trim(); // Already formatted with bullet points
+        if (rawIngredients.contains("•") || rawIngredients.contains("✓") || rawIngredients.contains("❌")) {
+            return rawIngredients.trim();
         }
         String[] items = rawIngredients.split(",");
         StringBuilder formatted = new StringBuilder();
         for (String item : items) {
             if (!item.trim().isEmpty()) {
                 formatted.append("• ").append(item.trim()).append("\n");
+            }
+        }
+        return formatted.toString().trim();
+    }
+
+    /**
+     * Formats raw cooking instructions into clean step-by-step numbered points.
+     */
+    private String formatInstructions(String rawInstructions) {
+        if (rawInstructions == null || rawInstructions.trim().isEmpty()) {
+            return "No cooking instructions available.";
+        }
+        if (rawInstructions.contains("\n") || rawInstructions.matches("(?s).*\\d+\\..*")) {
+            return rawInstructions.trim();
+        }
+        String[] steps = rawInstructions.split("\\.\\s+");
+        StringBuilder formatted = new StringBuilder();
+        int stepNumber = 1;
+        for (String step : steps) {
+            String trimmed = step.trim();
+            if (!trimmed.isEmpty()) {
+                if (trimmed.endsWith(".")) {
+                    trimmed = trimmed.substring(0, trimmed.length() - 1);
+                }
+                formatted.append(stepNumber++).append(". ").append(trimmed).append(".\n\n");
             }
         }
         return formatted.toString().trim();

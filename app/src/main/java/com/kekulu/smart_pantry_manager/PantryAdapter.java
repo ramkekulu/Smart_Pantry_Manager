@@ -1,6 +1,8 @@
 package com.kekulu.smart_pantry_manager;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,9 +63,14 @@ public class PantryAdapter
         PantryItem item =
                 pantryItems.get(position);
 
-        holder.ingredientName.setText(
-                item.getName()
-        );
+        // Ensure ingredient name is never blank
+        if (item.getName() != null && !item.getName().trim().isEmpty()) {
+            holder.ingredientName.setText(item.getName().trim());
+            holder.ingredientName.setVisibility(View.VISIBLE);
+        } else {
+            holder.ingredientName.setText("Ingredient");
+            holder.ingredientName.setVisibility(View.VISIBLE);
+        }
 
         String quantityText;
 
@@ -89,18 +96,35 @@ public class PantryAdapter
                 quantityText + " " + item.getUnit()
         );
 
-        if (item.getExpiryDate() == null
-                || item.getExpiryDate().trim().isEmpty()) {
+        SharedPreferences prefs = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
+        boolean notificationsEnabled = prefs.getBoolean("notifications_enabled", true);
 
-            holder.expiryText.setText(
-                    "Expiry: Not specified"
-            );
+        long days = DateUtils.getDaysUntilExpiry(item.getExpiryDate());
 
+        if (notificationsEnabled && days != Long.MAX_VALUE && days <= 3) {
+            if (days < 0) {
+                holder.expiryText.setText("🚨 EXPIRED! (" + item.getExpiryDate() + ")");
+            } else if (days == 0) {
+                holder.expiryText.setText("⚠️ EXPIRING TODAY! (" + item.getExpiryDate() + ")");
+            } else {
+                holder.expiryText.setText("⚠️ EXPIRING SOON! (" + days + " day(s) left: " + item.getExpiryDate() + ")");
+            }
+            holder.expiryText.setTextColor(Color.parseColor("#A94442"));
         } else {
+            if (item.getExpiryDate() == null
+                    || item.getExpiryDate().trim().isEmpty()) {
 
-            holder.expiryText.setText(
-                    "Expiry: " + item.getExpiryDate()
-            );
+                holder.expiryText.setText(
+                        "Expiry: Not specified"
+                );
+
+            } else {
+
+                holder.expiryText.setText(
+                        "Expiry: " + item.getExpiryDate()
+                );
+            }
+            holder.expiryText.setTextColor(Color.parseColor("#000000"));
         }
 
         holder.editButton.setOnClickListener(
@@ -164,4 +188,3 @@ public class PantryAdapter
         }
     }
 }
-

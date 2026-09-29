@@ -7,8 +7,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -17,7 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============================================================
 
     private static final String DATABASE_NAME = "smart_pantry.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 6;
 
     // ============================================================
     // PANTRY TABLE
@@ -87,6 +90,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         createUsersTable(db);
 
         seedRecipes(db);
+        seedInitialPantry(db);
     }
 
     // ============================================================
@@ -981,16 +985,60 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // ============================================================
-    // GET SUGGESTED RECIPES
+    // GET MISSING INGREDIENTS FOR A RECIPE
+    // ============================================================
+
+    public List<String> getMissingIngredients(int recipeId) {
+        List<String> missing = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor recipeCursor = null;
+
+        try {
+            recipeCursor = db.query(
+                    TABLE_RECIPE_INGREDIENTS,
+                    null,
+                    RECIPE_INGREDIENT_RECIPE_ID + "=?",
+                    new String[]{String.valueOf(recipeId)},
+                    null,
+                    null,
+                    null
+            );
+
+            if (recipeCursor != null && recipeCursor.moveToFirst()) {
+                do {
+                    String requiredName = recipeCursor.getString(
+                            recipeCursor.getColumnIndexOrThrow(RECIPE_INGREDIENT_NAME)
+                    );
+                    double requiredQuantity = recipeCursor.getDouble(
+                            recipeCursor.getColumnIndexOrThrow(RECIPE_REQUIRED_QUANTITY)
+                    );
+                    String requiredUnit = recipeCursor.getString(
+                            recipeCursor.getColumnIndexOrThrow(RECIPE_INGREDIENT_UNIT)
+                    );
+
+                    if (!hasEnoughIngredient(db, requiredName, requiredQuantity, requiredUnit)) {
+                        missing.add(requiredName);
+                    }
+                } while (recipeCursor.moveToNext());
+            }
+        } finally {
+            if (recipeCursor != null) {
+                recipeCursor.close();
+            }
+        }
+        return missing;
+    }
+
+    // ============================================================
+    // GET SUGGESTED RECIPES (COMPLETE + FEW MISSING)
     // ============================================================
 
     public List<Integer> getSuggestedRecipeIds() {
 
-        List<Integer> recipeIds =
-                new ArrayList<>();
+        List<Integer> completeRecipeIds = new ArrayList<>();
+        Map<Integer, List<String>> partialRecipeMap = new HashMap<>();
 
-        Cursor cursor =
-                getAllRecipes();
+        Cursor cursor = getAllRecipes();
 
         try {
 
@@ -1003,18 +1051,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                 )
                         );
 
-                if (canMakeRecipe(recipeId)) {
+                List<String> missing = getMissingIngredients(recipeId);
 
-                    recipeIds.add(recipeId);
+                if (missing.isEmpty()) {
+                    completeRecipeIds.add(recipeId);
+                } else if (missing.size() <= 3) {
+                    partialRecipeMap.put(recipeId, missing);
                 }
             }
 
         } finally {
 
-            cursor.close();
+            if (cursor != null) {
+                cursor.close();
+            }
         }
 
-        return recipeIds;
+        List<Map.Entry<Integer, List<String>>> sortedPartials = new ArrayList<>(partialRecipeMap.entrySet());
+        sortedPartials.sort((e1, e2) -> Integer.compare(e1.getValue().size(), e2.getValue().size()));
+
+        List<Integer> result = new ArrayList<>(completeRecipeIds);
+
+        for (Map.Entry<Integer, List<String>> entry : sortedPartials) {
+            if (!result.contains(entry.getKey())) {
+                result.add(entry.getKey());
+            }
+        }
+
+        return result;
     }
 
     // ============================================================
@@ -1433,26 +1497,59 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // ============================================================
+    // SEED INITIAL PANTRY
+    // ============================================================
+
+    private void seedInitialPantry(SQLiteDatabase db) {
+        Object[][] items = new Object[][]{
+                {"macaroni", 750.0, "g", "30/11/2026"},
+                {"cheddar cheese", 600.0, "g", "30/11/2026"},
+                {"milk", 1.5, "L", "30/11/2026"},
+                {"butter", 150.0, "g", "30/11/2026"},
+                {"flour", 120.0, "g", "30/11/2026"},
+                {"salt", 15.0, "g", "30/11/2026"},
+                {"pasta", 750.0, "g", "30/11/2026"},
+                {"tomatoes", 900.0, "g", "30/11/2026"},
+                {"garlic", 6.0, "clove", "30/11/2026"},
+                {"onion", 3.0, "piece", "30/11/2026"},
+                {"olive oil", 90.0, "ml", "30/11/2026"},
+                {"pepper", 6.0, "g", "30/11/2026"},
+                {"bread", 3.0, "loaf", "30/11/2026"},
+                {"parsley", 45.0, "g", "30/11/2026"},
+                {"ground beef", 1.2, "kg", "30/11/2026"},
+                {"burger buns", 12.0, "piece", "30/11/2026"},
+                {"lettuce", 150.0, "g", "30/11/2026"},
+                {"tomato", 300.0, "g", "30/11/2026"},
+                {"cheese", 300.0, "g", "30/11/2026"},
+                {"potatoes", 1.5, "kg", "30/11/2026"},
+                {"milk", 300.0, "ml", "30/11/2026"},
+                {"apple", 3.0, "piece", "30/11/2026"},
+                {"banana", 6.0, "piece", "30/11/2026"},
+                {"orange", 3.0, "piece", "30/11/2026"},
+                {"grapes", 450.0, "g", "30/11/2026"},
+                {"strawberries", 450.0, "g", "30/11/2026"},
+                {"honey", 90.0, "ml", "30/11/2026"},
+                {"pizza dough", 1.5, "kg", "30/11/2026"},
+                {"tomato sauce", 450.0, "ml", "30/11/2026"},
+                {"mozzarella cheese", 600.0, "g", "30/11/2026"},
+                {"basil", 45.0, "g", "30/11/2026"}
+        };
+
+        for (Object[] item : items) {
+            ContentValues values = new ContentValues();
+            values.put(PANTRY_NAME, (String) item[0]);
+            values.put(PANTRY_QUANTITY, (Double) item[1]);
+            values.put(PANTRY_UNIT, (String) item[2]);
+            values.put(PANTRY_EXPIRY, (String) item[3]);
+            db.insert(TABLE_PANTRY, null, values);
+        }
+    }
+
+    // ============================================================
     // SEED RECIPES
     // ============================================================
 
     private void seedRecipes(SQLiteDatabase db) {
-
-        addRecipe(
-                db,
-                "French Toast",
-                "Beat the eggs with milk, sugar and cinnamon. " +
-                        "Dip the bread into the mixture. " +
-                        "Fry in butter until golden on both sides.",
-                new String[][]{
-                        {"bread", "2", "piece"},
-                        {"egg", "2", "piece"},
-                        {"milk", "100", "ml"},
-                        {"sugar", "10", "g"},
-                        {"cinnamon", "2", "g"},
-                        {"butter", "10", "g"}
-                }
-        );
 
         addRecipe(
                 db,

@@ -11,6 +11,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -18,6 +21,7 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView txtProfileEmail;
 
     private Switch switchNotifications;
+    private Switch switchUnits;
     private Switch switchDarkMode;
 
     private Button btnChangePassword;
@@ -30,6 +34,12 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_settings);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, 0, 0, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
 
         // Profile
         txtProfileName = findViewById(R.id.txtProfileName);
@@ -51,6 +61,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Switches
         switchNotifications = findViewById(R.id.switchNotifications);
+        switchUnits = findViewById(R.id.switchUnits);
         switchDarkMode = findViewById(R.id.switchDarkMode);
 
         // Buttons
@@ -59,12 +70,35 @@ public class SettingsActivity extends AppCompatActivity {
         btnAbout = findViewById(R.id.btnAbout);
         btnLogout = findViewById(R.id.btnLogout);
 
+        // Bottom Navigation Tabs
+        TextView settingsNavPantry = findViewById(R.id.settingsNavPantry);
+        TextView settingsNavRecipes = findViewById(R.id.settingsNavRecipes);
+        TextView settingsNavSettings = findViewById(R.id.settingsNavSettings);
+
+        if (settingsNavPantry != null) {
+            settingsNavPantry.setOnClickListener(v -> {
+                Intent intent = new Intent(SettingsActivity.this, PantryActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            });
+        }
+
+        if (settingsNavRecipes != null) {
+            settingsNavRecipes.setOnClickListener(v -> {
+                Intent intent = new Intent(SettingsActivity.this, SuggestedRecipesActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            });
+        }
+
         // 1. EXPIRY REMINDERS SWITCH
         SharedPreferences prefs =
                 getSharedPreferences("AppSettings", MODE_PRIVATE);
 
         boolean notificationsEnabled =
-                prefs.getBoolean("notifications_enabled", false);
+                prefs.getBoolean("notifications_enabled", true);
 
         switchNotifications.setChecked(notificationsEnabled);
 
@@ -75,8 +109,8 @@ public class SettingsActivity extends AppCompatActivity {
                     .apply();
 
             String status = isChecked
-                    ? "Expiry reminders enabled"
-                    : "Expiry reminders disabled";
+                    ? "Expiring-soon alerts enabled"
+                    : "Expiring-soon alerts disabled";
 
             Toast.makeText(
                     SettingsActivity.this,
@@ -85,7 +119,32 @@ public class SettingsActivity extends AppCompatActivity {
             ).show();
         });
 
-        // 2. DARK MODE SWITCH
+        // 2. UNITS PREFERENCE SWITCH
+        boolean useImperialUnits =
+                prefs.getBoolean("use_imperial_units", false);
+
+        if (switchUnits != null) {
+            switchUnits.setChecked(useImperialUnits);
+
+            switchUnits.setOnCheckedChangeListener((buttonView, isChecked) -> {
+
+                prefs.edit()
+                        .putBoolean("use_imperial_units", isChecked)
+                        .apply();
+
+                String status = isChecked
+                        ? "Units preference set to Imperial (oz, fl oz)"
+                        : "Units preference set to Metric (g, ml)";
+
+                Toast.makeText(
+                        SettingsActivity.this,
+                        status,
+                        Toast.LENGTH_SHORT
+                ).show();
+            });
+        }
+
+        // 3. DARK MODE SWITCH
         boolean darkModeEnabled =
                 AppCompatDelegate.getDefaultNightMode()
                         == AppCompatDelegate.MODE_NIGHT_YES;
@@ -105,7 +164,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        // 3. CHANGE PASSWORD BUTTON
+        // 4. CHANGE PASSWORD BUTTON
         btnChangePassword.setOnClickListener(v -> {
 
             Intent intent = new Intent(
@@ -116,7 +175,7 @@ public class SettingsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // 4. CLEAR PANTRY BUTTON
+        // 5. CLEAR PANTRY BUTTON
         btnClearPantry.setOnClickListener(v -> {
 
             new AlertDialog.Builder(SettingsActivity.this)
@@ -140,7 +199,7 @@ public class SettingsActivity extends AppCompatActivity {
                     .show();
         });
 
-        // 5. ABOUT BUTTON
+        // 6. ABOUT BUTTON
         btnAbout.setOnClickListener(v -> {
 
             new AlertDialog.Builder(SettingsActivity.this)
@@ -154,7 +213,7 @@ public class SettingsActivity extends AppCompatActivity {
                     .show();
         });
 
-        // 6. LOGOUT BUTTON
+        // 7. LOGOUT BUTTON
         btnLogout.setOnClickListener(v -> {
 
             new AlertDialog.Builder(SettingsActivity.this)
@@ -185,4 +244,3 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 }
-

@@ -1,6 +1,7 @@
 package com.kekulu.smart_pantry_manager;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,9 +60,24 @@ public class RecipeAdapter
 
         holder.recipeName.setText(recipe.getName());
 
-        holder.recipeDescription.setText(
-                "You have all the ingredients needed to make this recipe."
-        );
+        if (recipe.isComplete()) {
+            holder.recipeDescription.setText("✓ You have all ingredients needed to make this recipe!");
+            holder.recipeDescription.setTextColor(Color.parseColor("#2E7D32")); // Green
+        } else {
+            List<String> missing = recipe.getMissingIngredients();
+            StringBuilder sb = new StringBuilder("⚠️ Missing ");
+            sb.append(missing.size()).append(" ingredient");
+            if (missing.size() > 1) {
+                sb.append("s");
+            }
+            sb.append(": ");
+            for (int i = 0; i < missing.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(missing.get(i));
+            }
+            holder.recipeDescription.setText(sb.toString());
+            holder.recipeDescription.setTextColor(Color.parseColor("#C62828")); // Red
+        }
 
         holder.viewRecipeButton.setOnClickListener(view ->
                 listener.onRecipeClick(recipe)
@@ -104,4 +120,3 @@ public class RecipeAdapter
         }
     }
 }
-

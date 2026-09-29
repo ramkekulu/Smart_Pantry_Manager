@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:background="@color/cream_background">
 
     <!-- TOP TOOLBAR -->
-
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/pantryToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:layout_alignParentTop="true"
         android:background="@color/khaki"
         android:elevation="4dp">
 
@@ -28,67 +27,12 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-
-    <!-- CONTENT -->
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="My Pantry"
-            android:textColor="@color/black"
-            android:textSize="25sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Ingredients currently available"
-            android:textColor="@color/black"
-            android:textSize="14sp" />
-
-
-        <!-- EMPTY MESSAGE -->
-
-        <TextView
-            android:id="@+id/emptyPantryText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:gravity="center"
-            android:text="Your pantry is empty.\nAdd ingredients to get started."
-            android:textColor="@color/black"
-            android:textSize="17sp"
-            android:visibility="gone" />
-
-
-        <!-- RECYCLER VIEW -->
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/pantryRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="15dp"
-            android:clipToPadding="false"
-            android:paddingBottom="10dp" />
-
-    </LinearLayout>
-
-
     <!-- BOTTOM NAVIGATION -->
-
     <LinearLayout
         android:id="@+id/pantryBottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:background="@color/khaki"
         android:elevation="8dp">
@@ -128,18 +72,103 @@
 
     </LinearLayout>
 
-
-    <!-- ADD BUTTON -->
-
+    <!-- 40DP KHAKI ADD BUTTON FLOATING ABOVE BOTTOM NAV -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addPantryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_margin="18dp"
+        android:layout_above="@id/pantryBottomNavigation"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
         android:contentDescription="Add ingredient"
         android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="@color/dark_khaki"
-        app:tint="@color/white" />
+        app:fabCustomSize="40dp"
+        app:maxImageSize="20dp"
+        app:backgroundTint="@color/khaki"
+        app:tint="@color/black" />
 
-</LinearLayout>
+    <!-- MAIN CONTENT AREA -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/pantryToolbar"
+        android:layout_above="@id/pantryBottomNavigation"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My Pantry"
+            android:textColor="@color/black"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Ingredients currently available"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <!-- SEARCH BAR -->
+        <EditText
+            android:id="@+id/pantrySearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@android:drawable/editbox_background_normal"
+            android:hint="Search ingredients..."
+            android:inputType="text"
+            android:padding="12dp"
+            android:textColor="@color/black"
+            android:textSize="15sp" />
+
+        <!-- EXPIRING SOON ALERT BANNER -->
+        <LinearLayout
+            android:id="@+id/pantryExpiryAlertBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#FFF3CD"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/pantryExpiryAlertText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#856404"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="⚠️ Alert: 2 item(s) in your pantry are expiring soon!" />
+
+        </LinearLayout>
+
+        <!-- EMPTY MESSAGE -->
+        <TextView
+            android:id="@+id/emptyPantryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:gravity="center"
+            android:text="Your pantry is empty.\nAdd ingredients to get started."
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:visibility="gone" />
+
+        <!-- RECYCLER VIEW WITH EXTRA BOTTOM PADDING FOR CLEARANCE -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/pantryRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="15dp"
+            android:clipToPadding="false"
+            android:paddingBottom="120dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>
