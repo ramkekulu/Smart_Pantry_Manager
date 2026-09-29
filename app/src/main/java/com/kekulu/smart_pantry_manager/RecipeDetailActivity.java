@@ -7,8 +7,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import java.util.List;
-
 public class RecipeDetailActivity extends AppCompatActivity {
 
     private TextView recipeNameText;
@@ -78,7 +76,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     Cursor ingCursor = databaseHelper.getRecipeIngredients(recipeId);
                     if (ingCursor != null) {
                         try {
-                            List<String> missingList = databaseHelper.getMissingIngredients(recipeId);
                             StringBuilder ingBuilder = new StringBuilder();
                             while (ingCursor.moveToNext()) {
                                 String ingName = ingCursor.getString(
@@ -92,12 +89,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                                 );
 
                                 String qtyStr = (qty == (long) qty) ? String.format("%d", (long) qty) : String.valueOf(qty);
-                                boolean isMissing = missingList.contains(ingName);
-                                if (isMissing) {
-                                    ingBuilder.append("❌ ").append(qtyStr).append(" ").append(unit).append(" ").append(ingName).append(" (Missing)\n");
-                                } else {
-                                    ingBuilder.append("✓ ").append(qtyStr).append(" ").append(unit).append(" ").append(ingName).append(" (In Pantry)\n");
-                                }
+                                ingBuilder.append("✓ ").append(qtyStr).append(" ").append(unit).append(" ").append(ingName).append(" (In Pantry)\n");
                             }
                             if (ingBuilder.length() > 0) {
                                 ingredients = ingBuilder.toString().trim();
@@ -114,7 +106,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 recipeNameText.setText(title != null && !title.isEmpty() ? title : "Suggested Recipe");
             }
 
-            // Populate Ingredients with tick/cross formatting
+            // Populate Ingredients with tick formatting
             if (ingredientsText != null) {
                 if (ingredients != null && !ingredients.isEmpty()) {
                     ingredientsText.setText(formatIngredients(ingredients));
@@ -153,17 +145,17 @@ public class RecipeDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Formats raw ingredient strings or comma-separated lists into bullet points with checkmarks/crosses.
+     * Formats raw ingredient strings or comma-separated lists into checkmarks.
      */
     private String formatIngredients(String rawIngredients) {
-        if (rawIngredients.contains("•") || rawIngredients.contains("✓") || rawIngredients.contains("❌")) {
+        if (rawIngredients.contains("•") || rawIngredients.contains("✓") || rawIngredients.contains("X")) {
             return rawIngredients.trim();
         }
         String[] items = rawIngredients.split(",");
         StringBuilder formatted = new StringBuilder();
         for (String item : items) {
             if (!item.trim().isEmpty()) {
-                formatted.append("• ").append(item.trim()).append("\n");
+                formatted.append("✓ ").append(item.trim()).append(" (In Pantry)\n");
             }
         }
         return formatted.toString().trim();

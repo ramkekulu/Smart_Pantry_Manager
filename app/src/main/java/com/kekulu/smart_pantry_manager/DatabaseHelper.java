@@ -20,7 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============================================================
 
     private static final String DATABASE_NAME = "smart_pantry.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 12;
 
     // ============================================================
     // PANTRY TABLE
@@ -600,11 +600,84 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // ============================================================
+    // ENSURE PANTRY STOCK (AUTO-TOP UP ALL RECIPE INGREDIENTS)
+    // ============================================================
+
+    public void ensurePantryStock() {
+        SQLiteDatabase db = getWritableDatabase();
+        String[][] items = new String[][]{
+                {"bread", "5", "loaf", "30/11/2026"},
+                {"egg", "12", "piece", "30/11/2026"},
+                {"milk", "2", "L", "30/11/2026"},
+                {"sugar", "500", "g", "30/11/2026"},
+                {"cinnamon", "50", "g", "30/11/2026"},
+                {"butter", "500", "g", "30/11/2026"},
+                {"flour", "1", "kg", "30/11/2026"},
+                {"baking powder", "50", "g", "30/11/2026"},
+                {"onion", "10", "piece", "30/11/2026"},
+                {"tomato", "10", "piece", "30/11/2026"},
+                {"cheese", "500", "g", "30/11/2026"},
+                {"salt", "200", "g", "30/11/2026"},
+                {"black pepper", "50", "g", "30/11/2026"},
+                {"chicken", "1.5", "kg", "30/11/2026"},
+                {"lettuce", "300", "g", "30/11/2026"},
+                {"tortilla", "6", "piece", "30/11/2026"},
+                {"garlic", "50", "clove", "30/11/2026"},
+                {"cooking oil", "500", "ml", "30/11/2026"},
+                {"carrot", "5", "piece", "30/11/2026"},
+                {"pepper", "3", "piece", "30/11/2026"},
+                {"soy sauce", "200", "ml", "30/11/2026"},
+                {"rice", "1", "kg", "30/11/2026"},
+                {"pea", "200", "g", "30/11/2026"},
+                {"pasta", "1", "kg", "30/11/2026"},
+                {"tomato sauce", "1", "L", "30/11/2026"},
+                {"olive oil", "200", "ml", "30/11/2026"},
+                {"macaroni", "1", "kg", "30/11/2026"},
+                {"cheddar cheese", "500", "g", "30/11/2026"},
+                {"beef", "1.5", "kg", "30/11/2026"},
+                {"cucumber", "3", "piece", "30/11/2026"},
+                {"potato", "2", "kg", "30/11/2026"},
+                {"parsley", "50", "g", "30/11/2026"},
+                {"burger bun", "12", "piece", "30/11/2026"},
+                {"apple", "5", "piece", "30/11/2026"},
+                {"banana", "6", "piece", "30/11/2026"},
+                {"orange", "5", "piece", "30/11/2026"},
+                {"grape", "500", "g", "30/11/2026"},
+                {"strawberry", "500", "g", "30/11/2026"},
+                {"honey", "200", "ml", "30/11/2026"},
+                {"pizza dough", "2", "kg", "30/11/2026"},
+                {"mozzarella cheese", "500", "g", "30/11/2026"},
+                {"basil", "50", "g", "30/11/2026"},
+                {"mayonnaise", "200", "g", "30/11/2026"}
+        };
+
+        for (String[] item : items) {
+            String name = item[0];
+            double qty = Double.parseDouble(item[1]);
+            String unit = item[2];
+            String expiry = item[3];
+
+            Cursor cursor = db.query(TABLE_PANTRY, new String[]{PANTRY_ID}, PANTRY_NAME + "=?", new String[]{name}, null, null, null);
+            if (cursor == null || cursor.getCount() == 0) {
+                if (cursor != null) cursor.close();
+                ContentValues values = new ContentValues();
+                values.put(PANTRY_NAME, name);
+                values.put(PANTRY_QUANTITY, qty);
+                values.put(PANTRY_UNIT, unit);
+                values.put(PANTRY_EXPIRY, expiry);
+                db.insert(TABLE_PANTRY, null, values);
+            } else {
+                cursor.close();
+            }
+        }
+    }
+
+    // ============================================================
     // PANTRY - GET ALL
     // ============================================================
 
     public Cursor getAllPantryItems() {
-
+        ensurePantryStock();
         SQLiteDatabase db =
                 getReadableDatabase();
 
@@ -1030,13 +1103,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // ============================================================
-    // GET SUGGESTED RECIPES (COMPLETE + FEW MISSING)
+    // GET SUGGESTED RECIPES (ALL RECIPES, SORTED BY FEWEST MISSING)
     // ============================================================
 
     public List<Integer> getSuggestedRecipeIds() {
+        ensurePantryStock();
 
-        List<Integer> completeRecipeIds = new ArrayList<>();
-        Map<Integer, List<String>> partialRecipeMap = new HashMap<>();
+        Map<Integer, Integer> missingCountMap = new HashMap<>();
+        List<Integer> allRecipeIds = new ArrayList<>();
 
         Cursor cursor = getAllRecipes();
 
@@ -1052,12 +1126,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         );
 
                 List<String> missing = getMissingIngredients(recipeId);
-
-                if (missing.isEmpty()) {
-                    completeRecipeIds.add(recipeId);
-                } else if (missing.size() <= 3) {
-                    partialRecipeMap.put(recipeId, missing);
-                }
+                missingCountMap.put(recipeId, missing.size());
+                allRecipeIds.add(recipeId);
             }
 
         } finally {
@@ -1067,18 +1137,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
 
-        List<Map.Entry<Integer, List<String>>> sortedPartials = new ArrayList<>(partialRecipeMap.entrySet());
-        sortedPartials.sort((e1, e2) -> Integer.compare(e1.getValue().size(), e2.getValue().size()));
+        allRecipeIds.sort((id1, id2) -> {
+            int count1 = missingCountMap.get(id1);
+            int count2 = missingCountMap.get(id2);
+            return Integer.compare(count1, count2);
+        });
 
-        List<Integer> result = new ArrayList<>(completeRecipeIds);
-
-        for (Map.Entry<Integer, List<String>> entry : sortedPartials) {
-            if (!result.contains(entry.getKey())) {
-                result.add(entry.getKey());
-            }
-        }
-
-        return result;
+        return allRecipeIds;
     }
 
     // ============================================================
@@ -1502,37 +1567,49 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private void seedInitialPantry(SQLiteDatabase db) {
         Object[][] items = new Object[][]{
-                {"macaroni", 750.0, "g", "30/11/2026"},
-                {"cheddar cheese", 600.0, "g", "30/11/2026"},
-                {"milk", 1.5, "L", "30/11/2026"},
-                {"butter", 150.0, "g", "30/11/2026"},
-                {"flour", 120.0, "g", "30/11/2026"},
-                {"salt", 15.0, "g", "30/11/2026"},
-                {"pasta", 750.0, "g", "30/11/2026"},
-                {"tomatoes", 900.0, "g", "30/11/2026"},
-                {"garlic", 6.0, "clove", "30/11/2026"},
-                {"onion", 3.0, "piece", "30/11/2026"},
-                {"olive oil", 90.0, "ml", "30/11/2026"},
-                {"pepper", 6.0, "g", "30/11/2026"},
-                {"bread", 3.0, "loaf", "30/11/2026"},
-                {"parsley", 45.0, "g", "30/11/2026"},
-                {"ground beef", 1.2, "kg", "30/11/2026"},
-                {"burger buns", 12.0, "piece", "30/11/2026"},
-                {"lettuce", 150.0, "g", "30/11/2026"},
-                {"tomato", 300.0, "g", "30/11/2026"},
-                {"cheese", 300.0, "g", "30/11/2026"},
-                {"potatoes", 1.5, "kg", "30/11/2026"},
-                {"milk", 300.0, "ml", "30/11/2026"},
-                {"apple", 3.0, "piece", "30/11/2026"},
+                {"bread", 5.0, "loaf", "30/11/2026"},
+                {"egg", 12.0, "piece", "30/11/2026"},
+                {"milk", 2.0, "L", "30/11/2026"},
+                {"sugar", 500.0, "g", "30/11/2026"},
+                {"cinnamon", 50.0, "g", "30/11/2026"},
+                {"butter", 500.0, "g", "30/11/2026"},
+                {"flour", 1.0, "kg", "30/11/2026"},
+                {"baking powder", 50.0, "g", "30/11/2026"},
+                {"onion", 10.0, "piece", "30/11/2026"},
+                {"tomato", 10.0, "piece", "30/11/2026"},
+                {"cheese", 500.0, "g", "30/11/2026"},
+                {"salt", 200.0, "g", "30/11/2026"},
+                {"black pepper", 50.0, "g", "30/11/2026"},
+                {"chicken", 1.5, "kg", "30/11/2026"},
+                {"lettuce", 300.0, "g", "30/11/2026"},
+                {"tortilla", 6.0, "piece", "30/11/2026"},
+                {"garlic", 50.0, "clove", "30/11/2026"},
+                {"cooking oil", 500.0, "ml", "30/11/2026"},
+                {"carrot", 5.0, "piece", "30/11/2026"},
+                {"pepper", 3.0, "piece", "30/11/2026"},
+                {"soy sauce", 200.0, "ml", "30/11/2026"},
+                {"rice", 1.0, "kg", "30/11/2026"},
+                {"pea", 200.0, "g", "30/11/2026"},
+                {"pasta", 1.0, "kg", "30/11/2026"},
+                {"tomato sauce", 1.0, "L", "30/11/2026"},
+                {"olive oil", 200.0, "ml", "30/11/2026"},
+                {"macaroni", 1.0, "kg", "30/11/2026"},
+                {"cheddar cheese", 500.0, "g", "30/11/2026"},
+                {"beef", 1.5, "kg", "30/11/2026"},
+                {"cucumber", 3.0, "piece", "30/11/2026"},
+                {"potato", 2.0, "kg", "30/11/2026"},
+                {"parsley", 50.0, "g", "30/11/2026"},
+                {"burger bun", 12.0, "piece", "30/11/2026"},
+                {"apple", 5.0, "piece", "30/11/2026"},
                 {"banana", 6.0, "piece", "30/11/2026"},
-                {"orange", 3.0, "piece", "30/11/2026"},
-                {"grapes", 450.0, "g", "30/11/2026"},
-                {"strawberries", 450.0, "g", "30/11/2026"},
-                {"honey", 90.0, "ml", "30/11/2026"},
-                {"pizza dough", 1.5, "kg", "30/11/2026"},
-                {"tomato sauce", 450.0, "ml", "30/11/2026"},
-                {"mozzarella cheese", 600.0, "g", "30/11/2026"},
-                {"basil", 45.0, "g", "30/11/2026"}
+                {"orange", 5.0, "piece", "30/11/2026"},
+                {"grape", 500.0, "g", "30/11/2026"},
+                {"strawberry", 500.0, "g", "30/11/2026"},
+                {"honey", 200.0, "ml", "30/11/2026"},
+                {"pizza dough", 2.0, "kg", "30/11/2026"},
+                {"mozzarella cheese", 500.0, "g", "30/11/2026"},
+                {"basil", 50.0, "g", "30/11/2026"},
+                {"mayonnaise", 200.0, "g", "30/11/2026"}
         };
 
         for (Object[] item : items) {
@@ -1848,24 +1925,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         {"onion", "50", "g"},
                         {"cheese", "40", "g"}
                 }
-        );
 
-        addRecipe(
-                db,
-                "Egg Mayo Sandwich",
-                "1. Peel the hard-boiled eggs and place them in a bowl. " +
-                        "2. Mash the eggs thoroughly using a fork. " +
-                        "3. Add 2 tbsp mayonnaise, 1/4 tsp salt, and 1/4 tsp black pepper, then mix until smooth. " +
-                        "4. Spread 1 tbsp softened butter evenly over one side of each bread slice. " +
-                        "5. Divide the egg mayo mixture between two bread slices, top with the remaining slices, cut diagonally, and serve.",
-                new String[][]{
-                        {"egg", "2", "piece"},
-                        {"bread", "4", "piece"},
-                        {"mayonnaise", "20", "g"},
-                        {"butter", "15", "g"},
-                        {"salt", "1", "g"},
-                        {"black pepper", "1", "g"}
-                }
         );
 
 

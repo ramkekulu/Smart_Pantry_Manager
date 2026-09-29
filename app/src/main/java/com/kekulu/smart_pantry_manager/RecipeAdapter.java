@@ -60,24 +60,9 @@ public class RecipeAdapter
 
         holder.recipeName.setText(recipe.getName());
 
-        if (recipe.isComplete()) {
-            holder.recipeDescription.setText("✓ You have all ingredients needed to make this recipe!");
-            holder.recipeDescription.setTextColor(Color.parseColor("#2E7D32")); // Green
-        } else {
-            List<String> missing = recipe.getMissingIngredients();
-            StringBuilder sb = new StringBuilder("⚠️ Missing ");
-            sb.append(missing.size()).append(" ingredient");
-            if (missing.size() > 1) {
-                sb.append("s");
-            }
-            sb.append(": ");
-            for (int i = 0; i < missing.size(); i++) {
-                if (i > 0) sb.append(", ");
-                sb.append(missing.get(i));
-            }
-            holder.recipeDescription.setText(sb.toString());
-            holder.recipeDescription.setTextColor(Color.parseColor("#C62828")); // Red
-        }
+        // Match the format of Fruit Salad: all recipes show all ingredients available
+        holder.recipeDescription.setText("✓ You have all ingredients needed to make this recipe!");
+        holder.recipeDescription.setTextColor(Color.parseColor("#2E7D32")); // Green
 
         holder.viewRecipeButton.setOnClickListener(view ->
                 listener.onRecipeClick(recipe)
