@@ -6,15 +6,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-<<<<<<< HEAD
         android:icon="@drawable/pantry_icon"
         android:label="Smart Pantry Manager"
         android:roundIcon="@drawable/pantry_icon"
-=======
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
->>>>>>> parent of c05ceff (Update app logo scaling and UI fixes)
         android:supportsRtl="true"
         android:theme="@style/Theme.Smart_Pantry_Manager">
 
@@ -67,6 +61,7 @@
         <activity
             android:name=".ChangePasswordActivity"
             android:exported="false"/>
+
     </application>
 
 </manifest>
