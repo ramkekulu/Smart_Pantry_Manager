@@ -677,7 +677,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============================================================
 
     public Cursor getAllPantryItems() {
-        ensurePantryStock();
         SQLiteDatabase db =
                 getReadableDatabase();
 
